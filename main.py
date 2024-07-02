@@ -4,7 +4,7 @@ from cryptography.hazmat.primitives import serialization
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from icecream import ic
-from db import MSql
+from db import MSql, Oracle
 import pytz
 import jwt
 import os
@@ -56,7 +56,7 @@ def authorize(token, client_id, public_key_hex):
 # --------------------------------------------------------------------------------
 
 # Consultar dados no banco do Controle Inteno --------------------------------------------------------------
-@app.route('/mysql/consulta/<data_base>', methods=['GET'])
+@app.route('/mysql/consulta/<data_base>', methods=['POST'])
 def mysql_consulta(data_base):
   try:
     token = request.headers.get('Authorization')
@@ -66,13 +66,33 @@ def mysql_consulta(data_base):
     
     if auth.get("success"):
       db = MSql()
-      sql = "SELECT * FROM RF_PLANOS"
+      sql =  request.json.get('query')
+      if not sql:
+        return jsonify({'success': False, 'message': 'Query SQL não fornecida.'}), 400
       dados = db.fetchall(sql, data_base)
-      ic(dados)
-    return jsonify(dados)
+      # ic(dados)
+    return jsonify({'success': True, 'dados': dados})
   except Exception as ex:
     return jsonify({'success': False, 'message': str(ex)}), 500
 
+@app.route('/oracle/consulta/<data_base>', methods=['POST'])
+def oracle_consulta(data_base):
+  try:
+    token = request.headers.get('Authorization')
+    client_id = request.headers.get('ClientId')
+    public_key_hex = request.headers.get('ClientSecurity')
+    auth = authorize(token, client_id, public_key_hex)
+    
+    if auth.get("success"):
+      db = Oracle()
+      sql =  request.json.get('query')
+      if not sql:
+        return jsonify({'success': False, 'message': 'Query SQL não fornecida.'}), 400
+      dados = db.fetchall(sql, data_base)
+      # ic(dados)
+    return jsonify({'success': True, 'dados': dados})
+  except Exception as ex:
+    return jsonify({'success': False, 'message': str(ex)}), 500
 
 # Inicia a aplicação ------------------------------
 if __name__ == '__main__':
