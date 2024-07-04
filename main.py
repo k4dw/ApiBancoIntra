@@ -4,7 +4,7 @@ from cryptography.hazmat.primitives import serialization
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from icecream import ic
-from db import MSql, Oracle
+from db import MSql, Ora
 import pytz
 import jwt
 import os
@@ -55,6 +55,11 @@ def authorize(token, client_id, public_key_hex):
   return {'success': True, 'message': 'Token válido', 'expire_in': expire_in}
 # --------------------------------------------------------------------------------
 
+# Status da API ---------
+@app.route('/')
+def status():
+  return "<h1>API Online</h1>"
+
 # Consultar dados no banco do Controle Inteno --------------------------------------------------------------
 @app.route('/mysql/consulta/<data_base>', methods=['POST'])
 def mysql_consulta(data_base):
@@ -65,16 +70,20 @@ def mysql_consulta(data_base):
     auth = authorize(token, client_id, public_key_hex)
     
     if auth.get("success"):
+    # if True:
       db = MSql()
       sql =  request.json.get('query')
       if not sql:
         return jsonify({'success': False, 'message': 'Query SQL não fornecida.'}), 400
       dados = db.fetchall(sql, data_base)
       # ic(dados)
-    return jsonify({'success': True, 'dados': dados})
+      return jsonify({'success': True, 'dados': dados})
+    else:
+      return jsonify(auth), 401
   except Exception as ex:
     return jsonify({'success': False, 'message': str(ex)}), 500
 
+# Consultar dados no banco da Fácil ------------------------------------------------------------------------
 @app.route('/oracle/consulta/<data_base>', methods=['POST'])
 def oracle_consulta(data_base):
   try:
@@ -84,13 +93,15 @@ def oracle_consulta(data_base):
     auth = authorize(token, client_id, public_key_hex)
     
     if auth.get("success"):
-      db = Oracle()
+      db = Ora()
       sql =  request.json.get('query')
       if not sql:
         return jsonify({'success': False, 'message': 'Query SQL não fornecida.'}), 400
       dados = db.fetchall(sql, data_base)
       # ic(dados)
-    return jsonify({'success': True, 'dados': dados})
+      return jsonify({'success': True, 'dados': dados})
+    else:
+      return jsonify(auth), 401
   except Exception as ex:
     return jsonify({'success': False, 'message': str(ex)}), 500
 

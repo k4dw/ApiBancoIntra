@@ -1,7 +1,8 @@
 from mysql.connector import errorcode
 from dotenv import load_dotenv
+from icecream import ic
 import mysql.connector
-import cx_Oracle
+import oracledb
 import json
 import os
 
@@ -11,7 +12,7 @@ class MSql:
   def __init__(self):
     try:
       self.conexao = mysql.connector.connect(host=os.getenv('INTRA_HOST'), user=os.getenv('INTRA_USER'), password=os.getenv('INTRA_PASSWORD'))
-      print("Banco de dados conectado!")
+      # print("Banco de dados conectado!")
     except mysql.connector.Error as err:
       if err.errno == errorcode.ER_BAD_DB_ERROR:
         print("O Banco de Dados não existe!")
@@ -65,13 +66,14 @@ class MSql:
     finally:
       self.conexao.close()
 # --------------------------------------------------------
-class Oracle:
+class Ora:
   def __init__(self):
     try:
-      dsn_tns = cx_Oracle.makedsn(os.getenv('FACIL_HOST'), os.getenv('FACIL_PORT'), service_name=os.getenv('FACIL_SERVICE'))
-      self.conexao = cx_Oracle.connect(user=os.getenv('FACIL_USER'), password=os.getenv('FACIL_PASSWORD'), dsn=dsn_tns)
-      print("Banco de dados conectado!")
-    except cx_Oracle.DatabaseError as err:
+      oracledb.init_oracle_client()
+      dsn_tns = oracledb.makedsn(os.getenv('FACIL_HOST'), os.getenv('FACIL_PORT'), service_name=os.getenv('FACIL_SERVICE'))
+      self.conexao = oracledb.connect(user=os.getenv('FACIL_USER'), password=os.getenv('FACIL_PASSWORD'), dsn=dsn_tns)
+      # print("Banco de dados conectado!")
+    except oracledb.DatabaseError as err:
       error, = err.args
       if error.code == 1017:
           print("Usuário e/ou Senha inválidos!")
@@ -95,11 +97,11 @@ class Oracle:
       colunas = [desc[0] for desc in cursor.description]
       resultado = cursor.fetchall()
       cursor.close()
-      
+      # ic(resultado)
       # Combine column names with rows
       dados = [dict(zip(colunas, linha)) for linha in resultado]
       return dados
-    except cx_Oracle.DatabaseError as err:
+    except oracledb.DatabaseError as err:
       error, = err.args
       print(f"Erro ao executar o comando: {error.message}")
       return None
@@ -120,7 +122,7 @@ class Oracle:
       self.conexao.commit()
       cursor.close()
       return True
-    except cx_Oracle.DatabaseError as err:
+    except oracledb.DatabaseError as err:
       error, = err.args
       print(f"Erro ao executar o comando: {error.message}")
       return None
@@ -129,6 +131,6 @@ class Oracle:
 # --------------------------------------------------------
 
 # db = MSql()
-# # print(db.fetchall("SELECT * FROM RF_PLANOS", "integra"))
+# print(db.fetchall("SELECT * FROM RF_PLANOS", "integra"))
 # print(db.fetchall("SELECT * FROM USUARIO", "tarefas_alerta"))
 
