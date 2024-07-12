@@ -7,7 +7,6 @@ from icecream import ic
 from db import MSql, Ora
 import pytz
 import jwt
-import os
 
 ic.configureOutput(prefix='DEBUG: ', includeContext=True)
 load_dotenv(override=True)
@@ -70,17 +69,20 @@ def mysql_consulta(data_base):
     auth = authorize(token, client_id, public_key_hex)
     
     if auth.get("success"):
-    # if True:
       db = MSql()
       sql =  request.json.get('query')
       if not sql:
-        return jsonify({'success': False, 'message': 'Query SQL não fornecida.'}), 400
+        ic("Query SQL não fornecida!")
+        return jsonify({'success': False, 'message': 'Query SQL não fornecida!'}), 400
       dados = db.fetchall(sql, data_base)
-      # ic(dados)
-      return jsonify({'success': True, 'dados': dados})
+      if dados.get('success'):
+        return jsonify(dados), 200
+      else:
+        return jsonify(dados), 400
     else:
       return jsonify(auth), 401
   except Exception as ex:
+    ic(str(ex))
     return jsonify({'success': False, 'message': str(ex)}), 500
 
 # Consultar dados no banco da Fácil ------------------------------------------------------------------------
@@ -96,13 +98,17 @@ def oracle_consulta(data_base):
       db = Ora()
       sql =  request.json.get('query')
       if not sql:
-        return jsonify({'success': False, 'message': 'Query SQL não fornecida.'}), 400
+        ic("Query SQL não fornecida!")
+        return jsonify({'success': False, 'message': 'Query SQL não fornecida!'}), 400
       dados = db.fetchall(sql, data_base)
-      # ic(dados)
-      return jsonify({'success': True, 'dados': dados})
+      if dados.get('success'):
+        return jsonify(dados), 200
+      else:
+        return jsonify(dados), 400
     else:
       return jsonify(auth), 401
   except Exception as ex:
+    ic(str(ex))
     return jsonify({'success': False, 'message': str(ex)}), 500
 
 # Inicia a aplicação ------------------------------

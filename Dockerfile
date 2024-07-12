@@ -14,10 +14,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expõe a porta em que a aplicação irá rodar
-EXPOSE 8000
+EXPOSE 5000
 
 # Define a variável de ambiente para o Flask
 ENV FLASK_APP=main.py
 
 # Comando para rodar a aplicação usando o Gunicorn
-CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "main:app"]
+# CMD ["gunicorn", "-w", "4", "-b", "0.0.0.0:8000", "main:app"]
+CMD ["python", "main.py"]
